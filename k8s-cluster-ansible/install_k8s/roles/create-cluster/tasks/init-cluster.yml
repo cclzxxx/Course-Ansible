@@ -1,0 +1,46 @@
+- name: Reset cluster
+  command:
+    kubeadm reset --force
+  register: kubeadm_reset
+
+- name: Init cluster k8s
+  command:
+    kubeadm init
+  register: kubeadm_init
+
+- name: Create directory .kube/
+  file:
+    path: ~/.kube
+    state: directory
+
+- name: Link file admin.conf para o ~/.kube/config
+  file:
+    src: /etc/kubernets/admin.conf
+    dest: ~/.kube/config
+    state: link
+
+- name: Setup podnet Wavenet
+  shell: kubectl apply -f {{ defaul_url_weavenet }}
+  register: weavenet result
+
+- name: Get token for add workers on cluster 
+  shell: kubadm token list | cut -d ' ' -f1 | sed -n '2p'
+  register: k8s_token
+
+- name: CA Hash
+  shell: openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+  register: k8s_master_cp_hash
+  
+- name: Add token and hash in dummy host
+  add host:
+    name: "K8S_TOKEN_HOLDER"
+    token: "{{ k8s_token.stdout }}"
+    hash: "{{ k8s_master_cp_hash.stdout }}"
+
+- name:
+  debug:
+    msg: " [MASTER] K8S_TOKEN_HOLDER - O token eh {{ hostvars['K8S_TOKEN_HOLDER']['token'] }} "
+  
+- name:
+  debug:
+    msg: " [MASTER] K8S_TOKEN_HOLDER - O hash eh {{ hostvars['K8S_TOKEN_HOLDER']['hash'] }} "

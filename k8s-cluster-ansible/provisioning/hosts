@@ -1,0 +1,4 @@
+[local]
+localhost ansible-connection=local ansible_phython_interpreter=phython gather_facts=false
+
+[kubernetes]

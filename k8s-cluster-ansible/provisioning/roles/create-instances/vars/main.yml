@@ -1,0 +1,8 @@
+---
+# vars file for create-instances
+instance_type: t2-medium
+security_group_name: ansible-class-sg
+image: ami-0400a1104d5b9caa1
+keypair: aws-ansible-key-class.pem
+count: 3
+profile: aws-cred

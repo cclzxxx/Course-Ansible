@@ -1,0 +1,50 @@
+- name: Install pip
+  apt:
+    name:
+      - phyton-pip
+
+- name: Install requirements
+  pip:
+    name:
+      - openshift
+      - PyYAML
+
+- name: Copy deployment file app.v1
+  template:
+    src: app-v1.yml.j2
+    dest: /opt/giropops/app-v1.yml
+    owner: root
+    group: root
+    mode: 0644
+  register: copy_deploy_app_v1
+
+- name: Copy deployment file app.v2
+  template:
+    src: app-v2.yml.j2
+    dest: /opt/giropops/app-v2.yml
+    owner: root
+    group: root
+    mode: 0644
+  register: copy_deploy_app_v2
+
+- name: Deploy app-v2
+  k8s:
+    state: present
+    namespace: default
+    src: /opt/giropops/app-v2.yml
+
+- name: Scale down app-v1 
+  k8s:
+    state: present
+    namespace: default
+    src: /opt/giropops/app-v1.yml
+
+- name: Wait 1 minutes for remove. Press control+c for cancel
+  pause:
+    minutes: 1
+
+- name: Remove app-v1
+  k8s: 
+    state: absent
+    namespace: default
+    src: /opt/giropops/app-v1.yml
